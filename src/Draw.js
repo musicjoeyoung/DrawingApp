@@ -18,9 +18,9 @@ const isWithinElement = (x, y, element) => {
   const { type, x1, y1, x2, y2 } = element;
   if (type === "rectangle") {
     const minX = Math.min(x1, x2);
-    const maxX = Math.min(x1, x2);
+    const maxX = Math.max(x1, x2);
     const minY = Math.min(y1, y2);
-    const maxY = Math.min(y1, y2);
+    const maxY = Math.max(y1, y2);
     return x >= minX && x <= maxX && y >= minY && y <= maxY;
   } else {
     const a = { x: x1, y: y1 };
@@ -51,12 +51,6 @@ const Draw = () => {
     elements.forEach(({ roughElement }) => roughCanvas.draw(roughElement), [
       elements,
     ]);
-
-    /* These are rendered shapes    
-    const rect = generator.rectangle(10, 10, 100, 100);
-    const line = generator.line(10, 10, 110, 110);
-    roughCanvas.draw(rect);
-    roughCanvas.draw(line); */
   });
 
   const updateElement = (id, x1, y1, x2, y2, type) => {
@@ -67,15 +61,15 @@ const Draw = () => {
     setElements(elementsCopy);
   };
 
-  //maybe a problem here? I'm unable to move rectangles
+  //HANDLEMOUSEDOWN
   const handleMouseDown = (event) => {
     const { clientX, clientY } = event;
     if (tool === "selection") {
       const element = getElementAtPosition(clientX, clientY, elements);
       if (element) {
-        const offSetX = clientX - element.x1;
+        const offsetX = clientX - element.x1;
         const offsetY = clientY - element.y1;
-        setSelectedElement({ ...element, offSetX, offsetY });
+        setSelectedElement({ ...element, offsetX, offsetY });
         setAction("moving");
       }
     } else {
@@ -92,6 +86,8 @@ const Draw = () => {
       setAction("drawing");
     }
   };
+
+  //HANDLEMOUSEMOVE
   const handleMouseMove = (event) => {
     const { clientX, clientY } = event;
 
@@ -109,16 +105,17 @@ const Draw = () => {
       const index = elements.length - 1;
       const { x1, y1 } = elements[index];
       updateElement(index, x1, y1, clientX, clientY, tool);
-      //console.log(clientX, clientY);
     } else if (action === "moving") {
-      const { id, x1, y1, x2, y2, type, offSetX, offsetY } = selectedElement;
+      const { id, x1, x2, y1, y2, type, offsetX, offsetY } = selectedElement;
       const width = x2 - x1;
       const height = y2 - y1;
-      const nexX1 = clientX - offSetX;
-      const nexY1 = clientY - offsetY;
-      updateElement(id, nexX1, nexY1, nexX1 + width, nexY1 + height, type);
+      const newX1 = clientX - offsetX;
+      const newY1 = clientY - offsetY;
+      updateElement(id, newX1, newY1, newX1 + width, newY1 + height, type);
     }
   };
+
+  //HANDLEMOUSEUP
   const handleMouseUp = () => {
     setAction("none");
     setSelectedElement(null);
